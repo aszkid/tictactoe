@@ -5,7 +5,7 @@
 <!-- CSS goes here -->
 <style>
 body {
-  background-color: #FFF; /* example... */
+	background-color: #FFF; /* example... */
 }
 </style>
 
@@ -16,25 +16,71 @@ body {
 <script type="text/javascript">
 
 function periodic() {
-  var d = document.getElementById('egdiv');
-  d.innerHTML = 'Random number: ' + Math.random()
+	//d.innerHTML = 'Random number: ' + Math.random()
 }
 
 var net; // declared outside -> global variable in window scope
 function start() {
-  // this gets executed on startup
-  //...
-  net = new convnetjs.Net();
-  // ...
+	var layers = [];
+	layers.push({type:'input', out_sx:1, out_sy:1, out_depth:9});
+	layers.push({type:'fc', num_neurons:9, activation:'tanh'});
+	layers.push({type:'softmax', num_classes:9});
+	net = new convnetjs.Net();
+	net.makeLayers(layers);
 
-  // example of running something every 1 second
-  setInterval(periodic, 1000);
+	var x = new convnetjs.Vol([
+		1,0,0,
+		0,0,0,
+		0,0,0
+	]);
+
+	var database = [
+		[[0,0,0,0,0,0,0,0,0],4],
+		[[0,1,0,0,0,0,0,0,0],0],
+		[[0,0,0,0,1,0,0,0,0],6],
+		[[1,0,0,0,0,0,0,0,0],4],
+		[[0,0,0,0,0,0,2,1,1],3],
+		[[0,1,0,0,2,0,0,0,1],0],
+		[[0,1,2,0,0,1,0,0,0],7],
+		[[1,0,0,0,1,0,0,0,2],6],
+		[[0,0,2,0,0,1,1,0,0],4]
+	];
+
+	var trainer = new convnetjs.Trainer(net, {learning_rate:0.085, l2_decay:0.001});
+	for(var i = 0; i < database.length; i++) {
+		var entry = new convnetjs.Vol(database[i][0]);
+		trainer.train(entry, database[i][1]);
+	}
+
+	var prob = net.forward(x);
+	for(var i = 0; i < prob.w.length; i++) {
+		document.getElementById("tab-" + i.toString()).innerHTML = prob.w[i];
+	}
+
+	setInterval(periodic, 1000);
 }
 
 </script>
 </head>
 
 <body onload="start()">
-<div id="egdiv"></div>
+<p id="egdiv"></p>
+<table border="1">
+	<tr>
+		<td id="tab-0"></td>
+		<td id="tab-1"></td>
+		<td id="tab-2"></td>
+	</tr>
+	<tr>
+		<td id="tab-3"></td>
+		<td id="tab-4"></td>
+		<td id="tab-5"></td>
+	</tr>
+	<tr>
+		<td id="tab-6"></td>
+		<td id="tab-7"></td>
+		<td id="tab-8"></td>
+	</tr>
+</table>
 </body>
 </html>
