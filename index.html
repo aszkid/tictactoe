@@ -40,8 +40,8 @@ function start() {
 	net.makeLayers(layers);
 
 	var situation = [
-		0,0,0,
-		0,0,0,
+		-1,1,0,
+		0,1,0,
 		0,0,0
 	];
 	var x = new convnetjs.Vol(situation);
@@ -50,21 +50,21 @@ function start() {
 		[[0,1,0,0,0,0,0,0,0],0],
 		[[0,0,0,0,1,0,0,0,0],6],
 		[[1,0,0,0,0,0,0,0,0],4],
-		[[0,0,0,0,0,0,2,1,1],3],
-		[[0,1,0,0,2,0,0,0,1],0],
-		[[0,1,2,0,0,1,0,0,0],7],
-		[[1,0,0,0,1,0,0,0,2],6],
-		[[0,0,2,0,0,1,1,0,0],4],
-		[[0,0,1,0,0,0,0,1,2],4],
-		[[2,0,0,1,0,0,0,1,0],2],
-		[[0,0,1,0,2,0,1,0,0],5],
-		[[1,0,0,2,1,1,0,0,2],6],
-		[[1,2,1,0,2,0,0,1,0],8],
-		[[0,0,0,1,0,2,2,1,1],1],
-		[[1,2,0,0,0,1,0,1,2],3],
-		[[0,1,2,0,2,1,1,0,0],8],
-		[[0,0,1,2,0,1,0,1,2],0],
-		[[0,0,0,0,0,0,0,0,0],4],
+		[[0,0,0,0,0,0,-1,1,1],3],
+		[[0,1,0,0,-1,0,0,0,1],0],
+		[[0,1,-1,0,0,1,0,0,0],7],
+		[[1,0,0,0,1,0,0,0,-1],6],
+		[[0,0,-1,0,0,1,1,0,0],4],
+		[[0,0,1,0,0,0,0,1,-1],4],
+		[[-1,0,0,1,0,0,0,1,0],2],
+		[[0,0,1,0,-1,0,1,0,0],5],
+		[[1,0,0,-1,1,1,0,0,-1],6],
+		[[1,-1,1,0,-1,0,0,1,0],8],
+		[[0,0,0,1,0,-1,-1,1,1],1],
+		[[1,-1,0,0,0,1,0,1,-1],3],
+		[[0,1,-1,0,-1,1,1,0,0],8],
+		[[0,0,1,-1,0,1,0,1,-1],0],
+		//[[0,0,0,0,0,0,0,0,0],4],
 	];
 	var transf_0 = [6,3,0,7,4,1,8,5,2];
 	var transf_1 = [2,1,0,5,4,3,8,7,6];
@@ -74,7 +74,7 @@ function start() {
 
 	var layer = new Array(9);
 	var out = null;
-	var trainer = new convnetjs.Trainer(net, {learning_rate:0.01, l2_decay:0.001});
+	var trainer = new convnetjs.Trainer(net, {learning_rate:0.02, l2_decay:0.001});
 	for(var i = 1; i < database.length; i++) {
 		var entry = null;
 		layer = database[i][0];
@@ -129,14 +129,15 @@ function start() {
 	}
 
 	var prob = net.forward(x);
-	var wemoveto = prob.w.indexOf(Math.max.apply(Math, prob.w));
-	document.getElementById("move").innerHTML = "(" + wemoveto%3 + "," + Math.floor(wemoveto/3) + ")";
 	for(var i = 0; i < prob.w.length; i++) {
 		//document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = prob.w[i].toFixed(3);
 		document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = situation[i].toFixed(3);
 		document.querySelectorAll("#probtab .tab-" + i.toString())[0].innerHTML = prob.w[i].toFixed(3);
-
+		document.querySelectorAll("#movement .tab-" + i.toString())[0].innerHTML = document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML;
 	}
+	var wemoveto = prob.w.indexOf(Math.max.apply(Math, prob.w));
+	document.getElementById("move").innerHTML = "(" + wemoveto%3 + "," + Math.floor(wemoveto/3) + ")";
+	document.querySelectorAll("#movement .tab-" + wemoveto)[0].innerHTML = (-1.00).toFixed(3);
 
 	setInterval(periodic, 1000);
 }
