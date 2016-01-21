@@ -76,7 +76,7 @@ function start() {
 
 	var layer = new Array(9);
 	var out = null;
-	var trainer = new convnetjs.Trainer(net, {learning_rate:0.01, l2_decay:0.001});
+	var trainer = new convnetjs.Trainer(net, {learning_rate:0.018, l2_decay:0.001});
 	for(var i = 1; i < database.length; i++) {
 		var entry = null;
 		layer = database[i][0];
@@ -139,7 +139,16 @@ function start() {
 	}
 	var wemoveto = null;
 	while(true) {
-		var temp = prob.w.indexOf(Math.max.apply(Math, prob.w));
+		//var temp = prob.w.indexOf(Math.max.apply(Math, prob.w));
+		var maxx = prob.w[0];
+		var temp = 0;
+		for(var i = 1; i < prob.w.length; i++) {
+			if(prob.w[i] > maxx) {
+				temp = i;
+				maxx = prob.w[i];
+			}
+		}
+		
 		if(situation_o[temp] !== 0) {
 			prob.w[temp] = 0;
 			continue;
