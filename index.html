@@ -40,9 +40,9 @@ function start() {
 	net.makeLayers(layers);
 
 	var situation = [
-		-1,-1,0,
-		0,1,1,
-		0,1,0
+		0,0,-1,
+		0,1,0,
+		0,0,1
 	];
 	var situation_o = situation;
 	var x = new convnetjs.Vol(situation);
@@ -75,7 +75,7 @@ function start() {
 
 	var layer = new Array(9);
 	var out = null;
-	var trainer = new convnetjs.Trainer(net, {learning_rate:0.03, l2_decay:0.001});
+	var trainer = new convnetjs.Trainer(net, {learning_rate:0.01, l2_decay:0.001});
 	for(var i = 1; i < database.length; i++) {
 		var entry = null;
 		layer = database[i][0];
