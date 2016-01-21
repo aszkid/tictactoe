@@ -30,6 +30,7 @@ function transform_o(frome, transf) {
 	return transf.map(function(x){return x;}).indexOf(frome);
 }
 
+var gamesize=9;
 var net; // declared outside -> global variable in window scope
 function start() {
 	var layers = [];
@@ -40,14 +41,6 @@ function start() {
 	layers.push({type:'softmax', num_classes:9});
 	net = new convnetjs.Net();
 	net.makeLayers(layers);
-
-	var situation = [
-		0,0,0,
-		0,1,0,
-		0,0,0
-	];
-	var situation_o = situation;
-	var x = new convnetjs.Vol(situation);
 
 	var database = [
 		[[0,1,0,0,0,0,0,0,0],0],
@@ -91,7 +84,7 @@ function start() {
 	var transf_3 = [8,5,2,7,4,1,6,3,0];
 	var transf_4 = [0,3,6,1,4,7,2,5,8];
 
-	var layer = new Array(situation.length);
+	var layer = new Array(transf_0.length);
 	var out = null;
 	var trainer = new convnetjs.Trainer(net, {learning_rate:0.01, l2_decay:0.001});
 	for(var i = 0; i < database.length; i++) {
@@ -146,6 +139,25 @@ function start() {
 		layer = transform(layer, transf_4);
 		out = transform_o(out, transf_4);
 	}
+
+}
+
+function turn() {
+	var pmove = parseInt(document.getElementById("pturn").value);
+	var situation = new Array(gamesize);
+
+	for(var i = 0; i < gamesize; i++) {
+		situation[i] = parseInt(document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML);
+	}
+
+	if(pmove > 9 || pmove < 0 || situation[pmove] != 0) {
+		alert("Invalid move! Try again.");
+		return;
+	}
+	situation[pmove] = 1;
+
+	var situation_o = situation;
+	var x = new convnetjs.Vol(situation);
 
 	// check if we have to block or can win
 	var lines = [
@@ -233,6 +245,22 @@ function start() {
 	}
 
 	document.querySelectorAll("#movement .tab-" + wemoveto)[0].innerHTML = -1;
+	document.getElementById("nturnbut").disabled = false;
+	document.getElementById("submibut").disabled = true;
+
+	if(canwin) {
+		alert("Machine won!");
+	}
+}
+
+function nturn() {
+	for(var i = 0; i < gamesize; i++) {
+		document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = document.querySelectorAll("#movement .tab-" + i.toString())[0].innerHTML;
+		document.querySelectorAll("#movement .tab-" + i.toString())[0].innerHTML = null;
+		document.querySelectorAll("#probtab .tab-" + i.toString())[0].innerHTML = null;
+	}
+	document.getElementById("nturnbut").disabled = true;
+	document.getElementById("submibut").disabled = false;
 }
 
 </script>
@@ -243,19 +271,19 @@ function start() {
 <h2>Original position</h2>
 <table id="original" border="1">
 	<tr>
-		<td class="tab-0"></td>
-		<td class="tab-1"></td>
-		<td class="tab-2"></td>
+		<td class="tab-0">0</td>
+		<td class="tab-1">0</td>
+		<td class="tab-2">0</td>
 	</tr>
 	<tr>
-		<td class="tab-3"></td>
-		<td class="tab-4"></td>
-		<td class="tab-5"></td>
+		<td class="tab-3">0</td>
+		<td class="tab-4">0</td>
+		<td class="tab-5">0</td>
 	</tr>
 	<tr>
-		<td class="tab-6"></td>
-		<td class="tab-7"></td>
-		<td class="tab-8"></td>
+		<td class="tab-6">0</td>
+		<td class="tab-7">0</td>
+		<td class="tab-8">0</td>
 	</tr>
 </table>
 
@@ -296,5 +324,10 @@ function start() {
 		<td class="tab-8"></td>
 	</tr>
 </table>
+
+<h3>Play</h3>
+<input id="pturn" size="5" type="text" min="0" max="8">
+<button id="submibut" onclick="turn();">Submit</button>
+<button id="nturnbut" onclick="nturn();" disabled>Next turn</button>
 </body>
 </html>
