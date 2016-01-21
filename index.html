@@ -43,8 +43,8 @@ function start() {
 
 	var situation = [
 		0,0,0,
-		0,1,0,
-		0,1,-1
+		1,1,0,
+		0,0,-1
 	];
 	var situation_o = situation;
 	var x = new convnetjs.Vol(situation);
@@ -149,37 +149,70 @@ function start() {
 	}
 
 	// check if we have to block or can win
-	for(var i = 0; i < 3; i++) {
-		console.log(i);
-	}
-
-	var prob = net.forward(x);
-	for(var i = 0; i < prob.w.length; i++) {
-		//document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = prob.w[i].toFixed(3);
-		document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = situation[i];
-		document.querySelectorAll("#probtab .tab-" + i.toString())[0].innerHTML = prob.w[i].toFixed(3);
-		document.querySelectorAll("#movement .tab-" + i.toString())[0].innerHTML = situation_o[i];
-	}
-	var wemoveto = null;
-	while(true) {
-		//var temp = prob.w.indexOf(Math.max.apply(Math, prob.w));
-		var maxx = prob.w[0];
-		var temp = 0;
-		for(var i = 1; i < prob.w.length; i++) {
-			if(prob.w[i] > maxx) {
-				temp = i;
-				maxx = prob.w[i];
+	var lines = [
+		[0,1,2],
+		[3,4,5],
+		[6,7,8],
+		[0,3,6],
+		[1,4,7],
+		[2,5,8],
+		[0,4,8],
+		[2,4,6]
+	];
+	var sum = 0;
+	var empty = null;
+	for(var i = 0; i < lines.length; i++) {
+		for(var j = 0; j < lines[i].length; j++) {
+			var what = situation[lines[i][j]];
+			sum += what;
+			if(what == 0) {
+				empty = lines[i][j];
 			}
 		}
-
-		if(situation_o[temp] !== 0) {
-			prob.w[temp] = 0;
-			continue;
+		if(sum==2) {
+			break;
 		}
-		wemoveto = temp;
-		document.getElementById("move").innerHTML = wemoveto + " (" + wemoveto%3 + "," + Math.floor(wemoveto/3) + ")";
-		break;
+		sum = 0;
 	}
+
+	for(var i = 0; i < situation.length; i++) {
+		document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = situation[i];
+		document.querySelectorAll("#movement .tab-" + i.toString())[0].innerHTML = situation_o[i];
+	}
+
+	var wemoveto = null;
+	if(sum==2) {
+		// enemy is about to win: block!!
+		console.log("move to " + empty);
+		wemoveto = empty;
+	} else {
+		var prob = net.forward(x);
+		for(var i = 0; i < prob.w.length; i++) {
+			document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = situation[i];
+			document.querySelectorAll("#probtab .tab-" + i.toString())[0].innerHTML = prob.w[i].toFixed(3);
+			document.querySelectorAll("#movement .tab-" + i.toString())[0].innerHTML = situation_o[i];
+		}
+		while(true) {
+			//var temp = prob.w.indexOf(Math.max.apply(Math, prob.w));
+			var maxx = prob.w[0];
+			var temp = 0;
+			for(var i = 1; i < prob.w.length; i++) {
+				if(prob.w[i] > maxx) {
+					temp = i;
+					maxx = prob.w[i];
+				}
+			}
+
+			if(situation_o[temp] !== 0) {
+				prob.w[temp] = 0;
+				continue;
+			}
+			wemoveto = temp;
+			console.log(wemoveto + " (" + wemoveto%3 + "," + Math.floor(wemoveto/3) + ")");
+			break;
+		}
+	}
+
 	document.querySelectorAll("#movement .tab-" + wemoveto)[0].innerHTML = -1;
 }
 
@@ -208,7 +241,6 @@ function start() {
 </table>
 
 <h2>Probability table</h2>
-<p><i>Moving to <span id="move"></span></i></p>
 <table id="probtab" border="1">
 	<tr>
 		<td class="tab-0"></td>
