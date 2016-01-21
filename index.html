@@ -40,10 +40,11 @@ function start() {
 	net.makeLayers(layers);
 
 	var situation = [
-		-1,1,0,
-		0,1,0,
-		0,0,0
+		-1,-1,0,
+		0,1,1,
+		0,1,0
 	];
+	var situation_o = situation;
 	var x = new convnetjs.Vol(situation);
 
 	var database = [
@@ -74,7 +75,7 @@ function start() {
 
 	var layer = new Array(9);
 	var out = null;
-	var trainer = new convnetjs.Trainer(net, {learning_rate:0.02, l2_decay:0.001});
+	var trainer = new convnetjs.Trainer(net, {learning_rate:0.03, l2_decay:0.001});
 	for(var i = 1; i < database.length; i++) {
 		var entry = null;
 		layer = database[i][0];
@@ -131,13 +132,22 @@ function start() {
 	var prob = net.forward(x);
 	for(var i = 0; i < prob.w.length; i++) {
 		//document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = prob.w[i].toFixed(3);
-		document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = situation[i].toFixed(3);
+		document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = situation[i];
 		document.querySelectorAll("#probtab .tab-" + i.toString())[0].innerHTML = prob.w[i].toFixed(3);
-		document.querySelectorAll("#movement .tab-" + i.toString())[0].innerHTML = document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML;
+		document.querySelectorAll("#movement .tab-" + i.toString())[0].innerHTML = situation_o[i];
 	}
-	var wemoveto = prob.w.indexOf(Math.max.apply(Math, prob.w));
-	document.getElementById("move").innerHTML = "(" + wemoveto%3 + "," + Math.floor(wemoveto/3) + ")";
-	document.querySelectorAll("#movement .tab-" + wemoveto)[0].innerHTML = (-1.00).toFixed(3);
+	var wemoveto = null;
+	while(true) {
+		var temp = prob.w.indexOf(Math.max.apply(Math, prob.w));
+		if(situation_o[temp] !== 0) {
+			prob.w[temp] = 0;
+			continue;
+		}
+		wemoveto = temp;
+		document.getElementById("move").innerHTML = "(" + wemoveto%3 + "," + Math.floor(wemoveto/3) + ")";
+		break;
+	}
+	document.querySelectorAll("#movement .tab-" + wemoveto)[0].innerHTML = -1;
 
 	setInterval(periodic, 1000);
 }
