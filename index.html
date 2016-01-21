@@ -19,6 +19,17 @@ function periodic() {
 	//d.innerHTML = 'Random number: ' + Math.random()
 }
 
+function transform(frome, transf) {
+	var to = new Array(transf.length);
+	for(var j = 0; j < transf.length; j++) {
+		to[j] = frome[transf[j]];
+	}
+	return to;
+}
+function transform_o(frome, transf) {
+	return transf.map(function(x){return x;}).indexOf(frome);
+}
+
 var net; // declared outside -> global variable in window scope
 function start() {
 	var layers = [];
@@ -28,14 +39,14 @@ function start() {
 	net = new convnetjs.Net();
 	net.makeLayers(layers);
 
-	var x = new convnetjs.Vol([
-		1,0,0,
+	var situation = [
+		0,0,0,
 		0,0,0,
 		0,0,0
-	]);
+	];
+	var x = new convnetjs.Vol(situation);
 
 	var database = [
-		[[0,0,0,0,0,0,0,0,0],4],
 		[[0,1,0,0,0,0,0,0,0],0],
 		[[0,0,0,0,1,0,0,0,0],6],
 		[[1,0,0,0,0,0,0,0,0],4],
@@ -43,18 +54,88 @@ function start() {
 		[[0,1,0,0,2,0,0,0,1],0],
 		[[0,1,2,0,0,1,0,0,0],7],
 		[[1,0,0,0,1,0,0,0,2],6],
-		[[0,0,2,0,0,1,1,0,0],4]
+		[[0,0,2,0,0,1,1,0,0],4],
+		[[0,0,1,0,0,0,0,1,2],4],
+		[[2,0,0,1,0,0,0,1,0],2],
+		[[0,0,1,0,2,0,1,0,0],5],
+		[[1,0,0,2,1,1,0,0,2],6],
+		[[1,2,1,0,2,0,0,1,0],8],
+		[[0,0,0,1,0,2,2,1,1],1],
+		[[1,2,0,0,0,1,0,1,2],3],
+		[[0,1,2,0,2,1,1,0,0],8],
+		[[0,0,1,2,0,1,0,1,2],0],
+		[[0,0,0,0,0,0,0,0,0],4],
 	];
+	var transf_0 = [6,3,0,7,4,1,8,5,2];
+	var transf_1 = [2,1,0,5,4,3,8,7,6];
+	var transf_2 = [6,7,8,3,4,5,0,1,2];
+	var transf_3 = [8,5,2,7,4,1,6,3,0];
+	var transf_4 = [0,3,6,1,4,7,2,5,8];
 
-	var trainer = new convnetjs.Trainer(net, {learning_rate:0.085, l2_decay:0.001});
-	for(var i = 0; i < database.length; i++) {
-		var entry = new convnetjs.Vol(database[i][0]);
-		trainer.train(entry, database[i][1]);
+	var layer = new Array(9);
+	var out = null;
+	var trainer = new convnetjs.Trainer(net, {learning_rate:0.01, l2_decay:0.001});
+	for(var i = 1; i < database.length; i++) {
+		var entry = null;
+		layer = database[i][0];
+		out = database[i][1];
+
+		// vanilla layout, e rotation
+		entry = new convnetjs.Vol(layer);
+		trainer.train(entry, out);
+
+		// rotation 90 deg
+		for(var j = 0; j < 3; j++) {
+			layer = transform(layer, transf_0);
+			out = transform_o(out, transf_0);
+			entry = new convnetjs.Vol(layer);
+			trainer.train(entry, out);
+		}
+		// go back to e
+		layer = transform(layer, transf_0);
+		out = transform_o(out, transf_0);
+
+		// transform 1
+		layer = transform(layer, transf_1);
+		out = transform_o(out, transf_1);
+		entry = new convnetjs.Vol(layer);
+		trainer.train(entry, out);
+		layer = transform(layer, transf_1);
+		out = transform_o(out, transf_1);
+
+		// transform 2
+		layer = transform(layer, transf_2);
+		out = transform_o(out, transf_2);
+		entry = new convnetjs.Vol(layer);
+		trainer.train(entry, out);
+		layer = transform(layer, transf_2);
+		out = transform_o(out, transf_2);
+
+		// transform 3
+		layer = transform(layer, transf_3);
+		out = transform_o(out, transf_3);
+		entry = new convnetjs.Vol(layer);
+		trainer.train(entry, out);
+		layer = transform(layer, transf_3);
+		out = transform_o(out, transf_3);
+
+		// transform 4
+		layer = transform(layer, transf_4);
+		out = transform_o(out, transf_4);
+		entry = new convnetjs.Vol(layer);
+		trainer.train(entry, out);
+		layer = transform(layer, transf_4);
+		out = transform_o(out, transf_4);
 	}
 
 	var prob = net.forward(x);
+	var wemoveto = prob.w.indexOf(Math.max.apply(Math, prob.w));
+	document.getElementById("move").innerHTML = "(" + wemoveto%3 + "," + Math.floor(wemoveto/3) + ")";
 	for(var i = 0; i < prob.w.length; i++) {
-		document.getElementById("tab-" + i.toString()).innerHTML = prob.w[i];
+		//document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = prob.w[i].toFixed(3);
+		document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = situation[i].toFixed(3);
+		document.querySelectorAll("#probtab .tab-" + i.toString())[0].innerHTML = prob.w[i].toFixed(3);
+
 	}
 
 	setInterval(periodic, 1000);
@@ -65,21 +146,61 @@ function start() {
 
 <body onload="start()">
 <p id="egdiv"></p>
-<table border="1">
+<h2>Original position</h2>
+<table id="original" border="1">
 	<tr>
-		<td id="tab-0"></td>
-		<td id="tab-1"></td>
-		<td id="tab-2"></td>
+		<td class="tab-0"></td>
+		<td class="tab-1"></td>
+		<td class="tab-2"></td>
 	</tr>
 	<tr>
-		<td id="tab-3"></td>
-		<td id="tab-4"></td>
-		<td id="tab-5"></td>
+		<td class="tab-3"></td>
+		<td class="tab-4"></td>
+		<td class="tab-5"></td>
 	</tr>
 	<tr>
-		<td id="tab-6"></td>
-		<td id="tab-7"></td>
-		<td id="tab-8"></td>
+		<td class="tab-6"></td>
+		<td class="tab-7"></td>
+		<td class="tab-8"></td>
+	</tr>
+</table>
+
+<h2>Probability table</h2>
+<p><i>Moving to <span id="move"></span></i></p>
+<table id="probtab" border="1">
+	<tr>
+		<td class="tab-0"></td>
+		<td class="tab-1"></td>
+		<td class="tab-2"></td>
+	</tr>
+	<tr>
+		<td class="tab-3"></td>
+		<td class="tab-4"></td>
+		<td class="tab-5"></td>
+	</tr>
+	<tr>
+		<td class="tab-6"></td>
+		<td class="tab-7"></td>
+		<td class="tab-8"></td>
+	</tr>
+</table>
+
+<h2>Final move</h2>
+<table id="movement" border="1">
+	<tr>
+		<td class="tab-0"></td>
+		<td class="tab-1"></td>
+		<td class="tab-2"></td>
+	</tr>
+	<tr>
+		<td class="tab-3"></td>
+		<td class="tab-4"></td>
+		<td class="tab-5"></td>
+	</tr>
+	<tr>
+		<td class="tab-6"></td>
+		<td class="tab-7"></td>
+		<td class="tab-8"></td>
 	</tr>
 </table>
 </body>
