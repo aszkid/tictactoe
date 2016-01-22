@@ -35,9 +35,7 @@ var net; // declared outside -> global variable in window scope
 function start() {
 	var layers = [];
 	layers.push({type:'input', out_sx:1, out_sy:1, out_depth:9});
-	layers.push({type:'fc', num_neurons:27, activation:'tanh'});
-	layers.push({type:'fc', num_neurons:27, activation:'tanh'});
-	layers.push({type:'fc', num_neurons:27, activation:'tanh'});
+	layers.push({type:'fc', num_neurons:18, activation:'tanh'});
 	layers.push({type:'softmax', num_classes:9});
 	net = new convnetjs.Net();
 	net.makeLayers(layers);
