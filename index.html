@@ -60,12 +60,24 @@ var but_next = null;
 var but_subt = null;
 var val_epoch = null;
 var val_pmove = null;
+var chk_randop = null;
+var lines = [
+	[0,1,2],
+	[3,4,5],
+	[6,7,8],
+	[0,3,6],
+	[1,4,7],
+	[2,5,8],
+	[0,4,8],
+	[2,4,6]
+];
 
 function start() {
 	but_next = document.getElementById("nturnbut");
 	but_subt = document.getElementById("submibut")
 	val_epoch = document.getElementById("epoch");
 	val_pmove = document.getElementById("pturn");
+	chk_randop = document.getElementById("randop");
 
 	for(var i = 0; i < gamesize; i++) {
 		tab_movement(i).innerHTML = "--";
@@ -179,22 +191,46 @@ function start() {
 
 }
 
+function random_move(situation) {
+	var move = null;
+	var sum = 0;
+	var probs = [0,0,0,0,0,0,0,0,0];
+
+	for(var i = 0; i < lines.length; i++) {
+		for(var j = 0; j < lines[i].length; j++) {
+			var what = situation[lines[i][j]];
+			sum += what;
+			if(what == 0) {
+				empty = lines[i][j];
+			}
+		}
+		if(sum==3) {
+			// lost
+			return {over: true, won: 1};
+		}
+		if(sum==-3) {
+			// won
+			return {over: true, won: -1};
+		}
+		sum = 0;
+	}
+
+	while(true) {
+		if(situation.every(elem => elem!=0)) {
+			return {over: true, won: 0};
+		}
+		move = random_range(0,8);
+		if(situation[move] == 0) {
+			return {move_chosen: move, prob_table: probs};
+		}
+	}
+}
 function machine_move(situation) {
 	var move = null;
 	var situation_o = situation;
 	var x = new convnetjs.Vol(situation);
 
 	// check if we have to block or can win
-	var lines = [
-		[0,1,2],
-		[3,4,5],
-		[6,7,8],
-		[0,3,6],
-		[1,4,7],
-		[2,5,8],
-		[0,4,8],
-		[2,4,6]
-	];
 	var sum = 0;
 	var empty = null;
 	var canwin = false;
@@ -276,7 +312,7 @@ function get_situation() {
 	return situation;
 }
 
-function turn(playermove) {
+function turn(playermove, random) {
 	var situation = get_situation();
 	if(playermove > 9 || playermove < 0 || situation[playermove] != 0) {
 		alert("Invalid move ("+playermove+")! Try again.");
@@ -287,14 +323,19 @@ function turn(playermove) {
 		tab_original(i).innerHTML = situation[i];
 	}
 
-	var move = machine_move(situation);
+	var move = null;
+	if(random) {
+		move = random_move(situation);
+	} else {
+		move = machine_move(situation);
+	}
 
 	//console.log("machine moving to " + move.move_chosen);
 	situation[move.move_chosen] = -1
 
 	if(move.over) {
-		console.log("-> game over, player " + move.won + " won!");
-		console.log("final situation: " + situation);
+		//console.log("-> game over, player " + move.won + " won!");
+		//console.log("final situation: " + situation);
 		for(var i = 0; i < gamesize; i++) {
 			tab_movement(i).innerHTML = situation[i];
 		}
@@ -313,7 +354,7 @@ function turn(playermove) {
 }
 
 function manual_turn() {
-	var t = turn(parseInt(val_pmove.value));
+	var t = turn(parseInt(val_pmove.value), true);
 	if(t.over) {
 		//reset();
 		but_subt.disabled = true;
@@ -343,6 +384,16 @@ function reset() {
 function game_rand() {
 	reset();
 	var times = parseInt(val_epoch.value);
+	var won = 0;
+	var lost = 0;
+	var draw = 0;
+	var randop = chk_randop.checked;
+
+	if(!randop) {
+		console.log("playing against N.NETW PLAYER");
+	} else {
+		console.log("playing against RANDOM PLAYER");
+	}
 
 	for(var i = 0; i < times; i++) {
 		// this is a game
@@ -361,8 +412,15 @@ function game_rand() {
 				}
 			}
 
-			m_move = turn(move);
+			m_move = turn(move, randop);
 			if(m_move.over == true) {
+				if(m_move.won == 1) {
+					won += 1;
+				} else if(m_move.won == -1) {
+					lost += 1;
+				} else if(m_move.won == 0) {
+					draw += 1;
+				}
 				break;
 			}
 			nturn();
@@ -370,6 +428,9 @@ function game_rand() {
 
 		situation=null;
 	}
+
+	console.log(times + " epochs: " + won + " won, " + lost + " lost, "+ draw + " draw");
+	console.log("p(win) = " + won/times);
 }
 
 </script>
@@ -436,6 +497,7 @@ function game_rand() {
 </table>
 
 <h3>Play</h3>
+<p><i>(manual player vs. trained network)</i></p>
 <input id="pturn" size="5" type="text" min="0" max="8">
 <button id="submibut" onclick="manual_turn();">Submit</button>
 <button id="nturnbut" onclick="nturn();" disabled>Next turn</button>
@@ -444,5 +506,6 @@ function game_rand() {
 <p><i>(random opponent vs. trained network)</i></p>
 <input type="text" size="5" id="epoch">
 <button id="gstart" onclick="game_rand();">Start games</button>
+<label><input type="checkbox" id="randop"> Random opponent</label>
 </body>
 </html>
