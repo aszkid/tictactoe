@@ -15,8 +15,19 @@ body {
 <!-- javascript goes here -->
 <script type="text/javascript">
 
-function periodic() {
-	//d.innerHTML = 'Random number: ' + Math.random()
+function random_range(min, max) {
+	return Math.floor(Math.random()*(max-min+1)+min);
+}
+function max_ele(arr) {
+	var maxx = arr[0];
+	var temp = 0;
+	for(var i = 1; i < arr.length; i++) {
+		if(arr[i] > maxx) {
+			temp = i;
+			maxx = arr[i];
+		}
+	}
+	return temp;
 }
 
 function transform(frome, transf) {
@@ -32,7 +43,31 @@ function transform_o(frome, transf) {
 
 var gamesize=9;
 var net; // declared outside -> global variable in window scope
+function tab_original(i) {
+	return document.querySelectorAll("#original .tab-" + i.toString())[0];
+}
+function tab_probs(i) {
+	return document.querySelectorAll("#probtab .tab-" + i.toString())[0];
+}
+function tab_movement(i) {
+	return document.querySelectorAll("#movement .tab-" + i.toString())[0];
+}
+var but_next = null;
+var but_subt = null;
+var val_epoch = null;
+var val_pmove = null;
+
 function start() {
+	but_next = document.getElementById("nturnbut");
+	but_subt = document.getElementById("submibut")
+	val_epoch = document.getElementById("epoch");
+	val_pmove = document.getElementById("pturn");
+
+	for(var i = 0; i < gamesize; i++) {
+		tab_movement(i).innerHTML = "--";
+		tab_probs(i).innerHTML = "--";
+	}
+
 	var layers = [];
 	layers.push({type:'input', out_sx:1, out_sy:1, out_depth:9});
 	layers.push({type:'fc', num_neurons:18, activation:'tanh'});
@@ -43,13 +78,10 @@ function start() {
 	var database = [
 		[[0,1,0,0,0,0,0,0,0],0],
 		[[0,0,0,0,1,0,0,0,0],6],
-		[[1,0,0,0,0,0,0,0,0],4],
 		[[0,0,0,0,0,0,-1,1,1],3],
 		[[0,1,0,0,-1,0,0,0,1],0],
 		[[0,1,-1,0,0,1,0,0,0],7],
 		[[1,0,0,0,1,0,0,0,-1],6],
-		[[0,0,-1,0,0,1,1,0,0],4],
-		[[0,0,1,0,0,0,0,1,-1],4],
 		[[-1,0,0,1,0,0,0,1,0],2],
 		[[0,0,1,0,-1,0,1,0,0],5],
 		[[1,0,0,-1,1,1,0,0,-1],6],
@@ -58,6 +90,9 @@ function start() {
 		[[1,-1,0,0,0,1,0,1,-1],3],
 		[[0,1,-1,0,-1,1,1,0,0],8],
 		[[0,0,1,-1,0,1,0,1,-1],0],
+		[[1,0,0,0,0,0,0,0,0],4],
+		[[0,0,-1,0,0,1,1,0,0],4],
+		[[0,0,1,0,0,0,0,1,-1],4],
 		//[[0,0,0,0,0,0,0,0,0],4],
 
 		/*[[3,3],0],
@@ -140,7 +175,96 @@ function start() {
 
 }
 
-function turn() {
+function machine_move(situation) {
+	var move = null;
+	var situation_o = situation;
+	var x = new convnetjs.Vol(situation);
+
+	// check if we have to block or can win
+	var lines = [
+		[0,1,2],
+		[3,4,5],
+		[6,7,8],
+		[0,3,6],
+		[1,4,7],
+		[2,5,8],
+		[0,4,8],
+		[2,4,6]
+	];
+	var sum = 0;
+	var empty = null;
+	var canwin = false;
+	var prob = {w: [0,0,0,0,0,0,0,0,0]};
+
+	// check if we can win
+	for(var i = 0; i < lines.length; i++) {
+		for(var j = 0; j < lines[i].length; j++) {
+			var what = situation[lines[i][j]];
+			sum += what;
+			if(what == 0) {
+				empty = lines[i][j];
+			}
+		}
+		if(sum==3) {
+			// lost
+			return {over: true, won: 1};
+		}
+		if(sum==-2) {
+			canwin = true;
+			move = empty;
+			break;
+		}
+		sum = 0;
+	}
+
+	sum=0;
+
+	if(!canwin) {
+		// check if we have to block
+		for(var i = 0; i < lines.length; i++) {
+			for(var j = 0; j < lines[i].length; j++) {
+				var what = situation[lines[i][j]];
+				sum += what;
+				if(what == 0) {
+					empty = lines[i][j];
+				}
+			}
+			if(sum==2) {
+				break;
+			}
+			sum = 0;
+		}
+
+		if(sum==2) {
+			// enemy is about to win: block!!
+			move = empty;
+		} else {
+			prob = net.forward(x);
+			while(true) {
+				if(prob.w.every(elem => elem==0)) {
+					return {over: true, won: 0};
+				}
+
+				var temp = max_ele(prob.w);
+
+				if(situation[temp] !== 0) {
+					prob.w[temp] = 0;
+					continue;
+				}
+				move = temp;
+				break;
+			}
+		}
+	}
+
+	if(canwin) {
+		return {over: true, won: -1, move_chosen: move};
+	}
+
+	return {prob_table: prob.w, move_chosen: move, over: false};
+}
+
+/*function turn() {
 	var pmove = parseInt(document.getElementById("pturn").value);
 	var situation = new Array(gamesize);
 
@@ -188,6 +312,7 @@ function turn() {
 		}
 		sum = 0;
 	}
+	sum=0;
 
 	if(!canwin) {
 		for(var i = 0; i < lines.length; i++) {
@@ -195,10 +320,12 @@ function turn() {
 				var what = situation[lines[i][j]];
 				sum += what;
 				if(what == 0) {
+					console.log("("+i+") 0 at " + lines[i][j]);
 					empty = lines[i][j];
 				}
 			}
 			if(sum==2) {
+				alert("we could lose!");
 				break;
 			}
 			sum = 0;
@@ -249,23 +376,108 @@ function turn() {
 	if(canwin) {
 		alert("Machine won!");
 	}
+}*/
+
+function get_situation() {
+	var situation = new Array(gamesize);
+	for(var i = 0; i < gamesize; i++) {
+		situation[i] = parseInt(tab_original(i).innerHTML);
+	}
+	return situation;
+}
+
+function turn(playermove) {
+	var situation = get_situation();
+	if(playermove > 9 || playermove < 0 || situation[playermove] != 0) {
+		alert("Invalid move! Try again.");
+		return;
+	}
+	situation[playermove] = 1;
+	for(var i = 0; i < gamesize; i++) {
+		tab_original(i).innerHTML = situation[i];
+	}
+
+	var move = machine_move(situation);
+
+	console.log("machine moving to " + move.move_chosen);
+	situation[move.move_chosen] = -1
+
+	if(move.over) {
+		console.log("-> game over, player " + move.won + " won!");
+		console.log("final situation: " + situation);
+		for(var i = 0; i < gamesize; i++) {
+			tab_movement(i).innerHTML = situation[i];
+		}
+		return move;
+	}
+
+	for(var i = 0; i < gamesize; i++) {
+		tab_probs(i).innerHTML = move.prob_table[i].toFixed(3);
+		tab_movement(i).innerHTML = situation[i];
+	}
+
+	but_next.disabled = false;
+	but_subt.disabled = true;
+
+	return move;
+}
+
+function manual_turn() {
+	var t = turn(parseInt(val_pmove.value));
+	if(t.over) {
+		//reset();
+		but_subt.disabled = true;
+	}
 }
 
 function nturn() {
 	for(var i = 0; i < gamesize; i++) {
-		document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = document.querySelectorAll("#movement .tab-" + i.toString())[0].innerHTML;
-		document.querySelectorAll("#movement .tab-" + i.toString())[0].innerHTML = null;
-		document.querySelectorAll("#probtab .tab-" + i.toString())[0].innerHTML = null;
+		tab_original(i).innerHTML = tab_movement(i).innerHTML;
+		tab_movement(i).innerHTML = "--";
+		tab_probs(i).innerHTML = "--";
 	}
-	document.getElementById("nturnbut").disabled = true;
-	document.getElementById("submibut").disabled = false;
+	but_next.disabled = true;
+	but_subt.disabled = false;
+}
+
+function reset() {
+	for(var i = 0; i < gamesize; i++) {
+		tab_original(i).innerHTML = "0";
+		tab_movement(i).innerHTML = "--";
+		tab_probs(i).innerHTML = "--";
+	}
+	but_next.disabled = true;
+	but_subt.disabled = false;
+}
+
+function game_rand() {
+	reset();
+	var times = parseInt(val_epoch.value);
+	var situation = null;
+
+	for(var i = 0; i < times; i++) {
+		// this is a game
+		situation = get_situation();
+		var move = null;
+		while(true) {
+			move = random_range(0,8);
+			if(situation[move] == 0) {
+				break;
+			}
+		}
+		var machine_move = turn(move);
+		if(machine_move.over==true) {
+
+		}
+	}
 }
 
 </script>
 </head>
 
 <body onload="start()">
-<p id="egdiv"></p>
+<button onclick="reset();">Reset</button>
+<hr>
 <h2>Original position</h2>
 <table id="original" border="1">
 	<tr>
@@ -325,7 +537,12 @@ function nturn() {
 
 <h3>Play</h3>
 <input id="pturn" size="5" type="text" min="0" max="8">
-<button id="submibut" onclick="turn();">Submit</button>
+<button id="submibut" onclick="manual_turn();">Submit</button>
 <button id="nturnbut" onclick="nturn();" disabled>Next turn</button>
+
+<h3>Automatic Game</h3>
+<p><i>(random opponent vs. trained network)</i></p>
+<input type="text" size="5" id="epoch">
+<button id="gstart" onclick="game_rand();">Start games</button>
 </body>
 </html>
