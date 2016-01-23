@@ -1,0 +1,171 @@
+<html>
+<head>
+<title>minimal demo</title>
+
+<!-- CSS goes here -->
+<style>
+#threetab {
+	border-right: thin dotted black;
+	padding-right:30px;
+}
+#fourtab {
+	padding-left:30px;
+}
+</style>
+
+<!-- import convnetjs library -->
+<script src="convnet-min.js"></script>
+
+<!-- javascript goes here -->
+<script type="text/javascript" src="4x4.js"></script>
+<script type="text/javascript" src="code.js"></script>
+</head>
+
+<body onload="byfour(); start();">
+<h1>4x4 version</h1>
+<label><input type="checkbox" id="randop"> Random opponent</label> --- <button onclick="reset();">Reset</button>
+<hr>
+<table>
+<tr>
+<td valign="top" id="threetab">
+	<h2>Original position</h2>
+	<table id="original" border="1">
+		<tr>
+			<td class="tab-0"></td>
+			<td class="tab-1"></td>
+			<td class="tab-2"></td>
+		</tr>
+		<tr>
+			<td class="tab-3"></td>
+			<td class="tab-4"></td>
+			<td class="tab-5"></td>
+		</tr>
+		<tr>
+			<td class="tab-6"></td>
+			<td class="tab-7"></td>
+			<td class="tab-8"></td>
+		</tr>
+	</table>
+
+	<h2>Probability table</h2>
+	<table id="probtab" border="1">
+		<tr>
+			<td class="tab-0"></td>
+			<td class="tab-1"></td>
+			<td class="tab-2"></td>
+		</tr>
+		<tr>
+			<td class="tab-3"></td>
+			<td class="tab-4"></td>
+			<td class="tab-5"></td>
+		</tr>
+		<tr>
+			<td class="tab-6"></td>
+			<td class="tab-7"></td>
+			<td class="tab-8"></td>
+		</tr>
+	</table>
+
+	<h2>Final move</h2>
+	<table id="movement" border="1">
+		<tr>
+			<td class="tab-0"></td>
+			<td class="tab-1"></td>
+			<td class="tab-2"></td>
+		</tr>
+		<tr>
+			<td class="tab-3"></td>
+			<td class="tab-4"></td>
+			<td class="tab-5"></td>
+		</tr>
+		<tr>
+			<td class="tab-6"></td>
+			<td class="tab-7"></td>
+			<td class="tab-8"></td>
+		</tr>
+	</table>
+</td>
+<td valign="top" id="fourtab">
+	<h2>Original position</h2>
+	<table id="original" border="1">
+		<tr>
+			<td class="tab-0"></td>
+			<td class="tab-1"></td>
+			<td class="tab-2"></td>
+			<td class="tab-3"></td>
+		</tr>
+		<tr>
+			<td class="tab-4"></td>
+			<td class="tab-5"></td>
+			<td class="tab-6"></td>
+			<td class="tab-7"></td>
+		</tr>
+		<tr>
+			<td class="tab-8"></td>
+			<td class="tab-9"></td>
+			<td class="tab-10"></td>
+			<td class="tab-11"></td>
+		</tr>
+		<tr>
+			<td class="tab-12"></td>
+			<td class="tab-13"></td>
+			<td class="tab-14"></td>
+			<td class="tab-15"></td>
+		</tr>
+	</table>
+
+	<h2>Probability table</h2>
+	<table id="probtab" border="1">
+		<tr>
+			<td class="tab-0"></td>
+			<td class="tab-1"></td>
+			<td class="tab-2"></td>
+		</tr>
+		<tr>
+			<td class="tab-3"></td>
+			<td class="tab-4"></td>
+			<td class="tab-5"></td>
+		</tr>
+		<tr>
+			<td class="tab-6"></td>
+			<td class="tab-7"></td>
+			<td class="tab-8"></td>
+		</tr>
+	</table>
+
+	<h2>Final move</h2>
+	<table id="movement" border="1">
+		<tr>
+			<td class="tab-0"></td>
+			<td class="tab-1"></td>
+			<td class="tab-2"></td>
+		</tr>
+		<tr>
+			<td class="tab-3"></td>
+			<td class="tab-4"></td>
+			<td class="tab-5"></td>
+		</tr>
+		<tr>
+			<td class="tab-6"></td>
+			<td class="tab-7"></td>
+			<td class="tab-8"></td>
+		</tr>
+	</table>
+</td>
+</tr>
+</table>
+<hr>
+<h3>Manual Game</h3>
+<p><i>(manual player)</i></p>
+<input id="pturn" size="5" type="text" min="0" max="8">
+<button id="submibut" onclick="manual_turn();">Submit</button>
+<button id="nturnbut" onclick="nturn();" disabled>Next turn</button>
+
+<h3>Automatic Game</h3>
+<p><i>(random player)</i></p>
+<input type="text" size="5" id="epoch">
+<button id="gstart" onclick="game_rand();">Start games</button>
+<hr>
+<p>Go to <a href="index.html">3x3 version</a></p>
+</body>
+</html>
