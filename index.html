@@ -29,6 +29,10 @@ function max_ele(arr) {
 	}
 	return temp;
 }
+function sleep_for(milis) {
+	var now = new Date().getTime();
+	while(new Date().getTime() < now + milis){}
+}
 
 function transform(frome, transf) {
 	var to = new Array(transf.length);
@@ -264,120 +268,6 @@ function machine_move(situation) {
 	return {prob_table: prob.w, move_chosen: move, over: false};
 }
 
-/*function turn() {
-	var pmove = parseInt(document.getElementById("pturn").value);
-	var situation = new Array(gamesize);
-
-	for(var i = 0; i < gamesize; i++) {
-		situation[i] = parseInt(document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML);
-	}
-
-	if(pmove > 9 || pmove < 0 || situation[pmove] != 0) {
-		alert("Invalid move! Try again.");
-		return;
-	}
-	situation[pmove] = 1;
-
-	var situation_o = situation;
-	var x = new convnetjs.Vol(situation);
-
-	// check if we have to block or can win
-	var lines = [
-		[0,1,2],
-		[3,4,5],
-		[6,7,8],
-		[0,3,6],
-		[1,4,7],
-		[2,5,8],
-		[0,4,8],
-		[2,4,6]
-	];
-	var sum = 0;
-	var empty = null;
-	var canwin = false;
-	var wemoveto = null;
-
-	for(var i = 0; i < lines.length; i++) {
-		for(var j = 0; j < lines[i].length; j++) {
-			var what = situation[lines[i][j]];
-			sum += what;
-			if(what == 0) {
-				empty = lines[i][j];
-			}
-		}
-		if(sum==-2) {
-			canwin = true;
-			wemoveto = empty;
-			break;
-		}
-		sum = 0;
-	}
-	sum=0;
-
-	if(!canwin) {
-		for(var i = 0; i < lines.length; i++) {
-			for(var j = 0; j < lines[i].length; j++) {
-				var what = situation[lines[i][j]];
-				sum += what;
-				if(what == 0) {
-					console.log("("+i+") 0 at " + lines[i][j]);
-					empty = lines[i][j];
-				}
-			}
-			if(sum==2) {
-				alert("we could lose!");
-				break;
-			}
-			sum = 0;
-		}
-
-		if(sum==2) {
-			// enemy is about to win: block!!
-			console.log("move to " + empty);
-			wemoveto = empty;
-		} else {
-			var prob = net.forward(x);
-			for(var i = 0; i < prob.w.length; i++) {
-				document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = situation[i];
-				document.querySelectorAll("#probtab .tab-" + i.toString())[0].innerHTML = prob.w[i].toFixed(3);
-				document.querySelectorAll("#movement .tab-" + i.toString())[0].innerHTML = situation_o[i];
-			}
-			while(true) {
-				//var temp = prob.w.indexOf(Math.max.apply(Math, prob.w));
-				var maxx = prob.w[0];
-				var temp = 0;
-				for(var i = 1; i < prob.w.length; i++) {
-					if(prob.w[i] > maxx) {
-						temp = i;
-						maxx = prob.w[i];
-					}
-				}
-
-				if(situation_o[temp] !== 0) {
-					prob.w[temp] = 0;
-					continue;
-				}
-				wemoveto = temp;
-				console.log(wemoveto + " (" + wemoveto%3 + "," + Math.floor(wemoveto/3) + ")");
-				break;
-			}
-		}
-	}
-
-	for(var i = 0; i < situation.length; i++) {
-		document.querySelectorAll("#original .tab-" + i.toString())[0].innerHTML = situation[i];
-		document.querySelectorAll("#movement .tab-" + i.toString())[0].innerHTML = situation_o[i];
-	}
-
-	document.querySelectorAll("#movement .tab-" + wemoveto)[0].innerHTML = -1;
-	document.getElementById("nturnbut").disabled = false;
-	document.getElementById("submibut").disabled = true;
-
-	if(canwin) {
-		alert("Machine won!");
-	}
-}*/
-
 function get_situation() {
 	var situation = new Array(gamesize);
 	for(var i = 0; i < gamesize; i++) {
@@ -389,7 +279,7 @@ function get_situation() {
 function turn(playermove) {
 	var situation = get_situation();
 	if(playermove > 9 || playermove < 0 || situation[playermove] != 0) {
-		alert("Invalid move! Try again.");
+		alert("Invalid move ("+playermove+")! Try again.");
 		return;
 	}
 	situation[playermove] = 1;
@@ -399,7 +289,7 @@ function turn(playermove) {
 
 	var move = machine_move(situation);
 
-	console.log("machine moving to " + move.move_chosen);
+	//console.log("machine moving to " + move.move_chosen);
 	situation[move.move_chosen] = -1
 
 	if(move.over) {
@@ -453,22 +343,32 @@ function reset() {
 function game_rand() {
 	reset();
 	var times = parseInt(val_epoch.value);
-	var situation = null;
 
 	for(var i = 0; i < times; i++) {
 		// this is a game
-		situation = get_situation();
+		reset();
+
 		var move = null;
+		var m_move = null;
+		var situation = null;
+
 		while(true) {
-			move = random_range(0,8);
-			if(situation[move] == 0) {
+			situation = get_situation();
+			while(true) {
+				move = random_range(0,8);
+				if(situation[move] == 0) {
+					break;
+				}
+			}
+
+			m_move = turn(move);
+			if(m_move.over == true) {
 				break;
 			}
+			nturn();
 		}
-		var machine_move = turn(move);
-		if(machine_move.over==true) {
 
-		}
+		situation=null;
 	}
 }
 
