@@ -185,40 +185,6 @@ function start() {
 
 }
 
-/*function random_move(situation) {
-	var move = null;
-	var sum = 0;
-	var probs = [0,0,0,0,0,0,0,0,0];
-
-	for(var i = 0; i < lines.length; i++) {
-		for(var j = 0; j < lines[i].length; j++) {
-			var what = situation[lines[i][j]];
-			sum += what;
-			if(what == 0) {
-				empty = lines[i][j];
-			}
-		}
-		if(sum==3) {
-			// lost
-			return {over: true, won: 1};
-		}
-		if(sum==-3) {
-			// won
-			return {over: true, won: -1};
-		}
-		sum = 0;
-	}
-
-	while(true) {
-		if(situation.every(elem => elem!=0)) {
-			return {over: true, won: 0};
-		}
-		move = random_range(0,8);
-		if(situation[move] == 0) {
-			return {move_chosen: move, prob_table: probs};
-		}
-	}
-}*/
 function random_move(situation) {
 	var move = null;
 	var sum = 0;
@@ -271,6 +237,7 @@ function machine_move(situation, check) {
 
 	// check if we can win
 	for(var i = 0; i < lines.length; i++) {
+		var lastsit = lines[i];
 		for(var j = 0; j < lines[i].length; j++) {
 			var what = situation[lines[i][j]];
 			sum += what;
@@ -280,9 +247,14 @@ function machine_move(situation, check) {
 		}
 		if(sum==3 && check) {
 			// lost
-			return {over: true, won: 1};
+			return {over: true, won: 1, prob_table: prob.w};
+				//move_chosen: lastsit[random_range(0,lastsit.length-1)]}; trick: here move close, you may win by moving here but i'm full...
 		}
-		if(sum==-2) {
+		if(sum==-3 && check) {
+			// won
+			return {over: true, won: -1, prob_table: prob.w};
+		}
+		if(sum==-2 && check) {
 			canwin = true;
 			move = empty;
 			break;
@@ -315,7 +287,12 @@ function machine_move(situation, check) {
 			prob = net.forward(x);
 			while(true) {
 				if(prob.w.every(elem => elem==0)) {
-					return {over: true, won: 0};
+					// draw!
+					if(!check) {
+						// shit is filled but you need to move, don't worry here you have
+						return {over:true, won:0, prob_table:prob.w, move_chosen:random_range(0,8)};
+					}
+					return {over: true, won: 0, prob_table: prob.w};
 				}
 
 				var temp = max_ele(prob.w);
@@ -331,7 +308,7 @@ function machine_move(situation, check) {
 	}
 
 	if(canwin) {
-		return {over: true, won: -1, move_chosen: move};
+		return {over: true, won: -1, move_chosen: move, prob_table: prob.w};
 	}
 
 	return {prob_table: prob.w, move_chosen: move, over: false};

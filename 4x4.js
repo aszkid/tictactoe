@@ -45,7 +45,7 @@ function find_win(situation) {
 	for(var i = 0; i < wlines.length; i++) {
 		var sum = 0;
 		for(var j = 0; j < wlines[i].length; j++) {
-			sum += wlines[i][j];
+			sum += situation[wlines[i][j]];
 		}
 		if(sum==n) {
 			return 1;
@@ -82,6 +82,52 @@ var priorities = [
 	[[15,10],[11,14]]
 ];
 
+function fourify_threemove(situation, move) {
+	var finalmove = null;
+	var choices = priorities[move.move_chosen];
+	// high priority moves
+	for(var j = 0; j < choices[0].length; j++) {
+		while(true) {
+			if(choices[0].length == 0) {
+				console.log("going to second choice");
+				break;
+			}
+			var cindex = random_range(0,choices[0].length-1);
+			var c = choices[0][cindex];
+			if(situation[c] == 0) {
+				finalmove = c;
+				break;
+			}
+			choices[0].splice(cindex, 1);
+		}
+	}
+	if(finalmove == null) {
+		if(choices[1].length == 0) {
+			// MIDDLE THINGY IS FULL!!! CHOOSE ADJACENT
+			var adj = [0,1,2,3,5,6,7,8];
+			return fourify_threemove(situation, {move_chosen: adj[random_range(0,8)]});
+		}
+		for(var j = 0; j < choices[1].length; j++) {
+			while(true) {
+				if(choices[1].length == 0) {
+					// probably a draw
+					//alert("couldn't find good position!!");
+					return {over: true, won: 0};
+					break;
+				}
+				var cindex = random_range(0,choices[1].length-1);
+				var c = choices[1][cindex];
+				if(situation[c] == 0) {
+					finalmove = c;
+					break;
+				}
+				choices[1].splice(cindex, 1);
+			}
+		}
+	}
+	return {move_chosen:finalmove, over:false};
+}
+
 function turn_four(playermove, random) {
 	var situation = get_situation_four();
 	if(!valid_move(playermove, situation)) {
@@ -91,6 +137,12 @@ function turn_four(playermove, random) {
 	situation[playermove] = 1;
 	for(var i = 0; i < newgamesize; i++) {
 		tab_original_four(i).innerHTML = situation[i];
+	}
+
+	// check if this move won
+	var won = find_win(situation);
+	if(won!=0) {
+		return {won:won, over:true};
 	}
 
 	var move = null;
@@ -117,70 +169,29 @@ function turn_four(playermove, random) {
 		p = p.filter(e => e.val !== 0);
 		// choose a random representative
 		var rep = p[random_range(0,p.length-1)];
+		// OOOR: give priority to PLAYER if it is EMPTY v. PLAYER!!
 		situation_three[i] = rep.p;
 	}
 	set_situation(situation_three, tab_original);
 
 	// feed to 3x3 neural network
+	var finalmove = null;
 	if(random) {
-		move = random_move(situation);
+		finalmove = random_move(situation);
 	} else {
 		move = machine_move(situation_three, false);
-	}
-	situation_three[move.move_chosen] = -1;
-	for(var i = 0; i < gamesize; i++) {
-		tab_probs(i).innerHTML = move.prob_table[i].toFixed(3);
-		tab_movement(i).innerHTML = situation_three[i];
+		situation_three[move.move_chosen] = -1;
+		for(var i = 0; i < gamesize; i++) {
+			tab_probs(i).innerHTML = move.prob_table[i].toFixed(3);
+			tab_movement(i).innerHTML = situation_three[i];
+		}
+		finalmove = fourify_threemove(situation, move);
 	}
 
 	// complexify into 4x4 situation
-	/*for(var i = 0; i < 9; i++) {
-		// select by priority: try elems. of first array, then second
-		var choices = priorities[i];
-		// first choices
-		for(var j = 0; j < choices[0].length; j++) {
-			while(true) {
-				var c = choices[0][random_range(0,choices[0].length-1)];
-				if()
-			}
-		}
-	}*/
-	var finalmove = null;
-	var choices = priorities[move.move_chosen];
-	// high priority moves
-	for(var j = 0; j < choices[0].length; j++) {
-		while(true) {
-			if(choices[0].length == 0) {
-				break;
-			}
-			var cindex = random_range(0,choices[0].length-1);
-			var c = choices[0][cindex];
-			if(situation[c] == 0) {
-				finalmove = c;
-				break;
-			}
-			choices[0].splice(cindex, 1);
-		}
-	}
-	if(finalmove == null) {
-		console.log("trying second choice");
-		for(var j = 0; j < choices[1].length; j++) {
-			while(true) {
-				if(choices[1].length == 0) {
-					break;
-				}
-				var cindex = random_range(0,choices[1].length-1);
-				var c = choices[1][cindex];
-				if(situation[c] == 0) {
-					finalmove = c;
-					break;
-				}
-				choices[1].splice(cindex, 1);
-			}
-		}
-	}
-	console.log("finally moving to " + finalmove);
-	situation[finalmove] = -1;
+	console.log("you moved: " + playermove);
+	console.log("i moved  : " + finalmove.move_chosen);
+	situation[finalmove.move_chosen] = -1;
 	// check win
 	var won = find_win(situation);
 	if(won!=0) {
@@ -197,7 +208,7 @@ function turn_four(playermove, random) {
 	but_next.disabled = false;
 	but_subt.disabled = true;
 
-	return move;
+	return {over:false, move_chosen:finalmove.move_chosen};
 }
 function manual_turn_four() {
 	var t = turn_four(parseInt(val_pmove.value), chk_randop.checked);
@@ -213,4 +224,59 @@ function nturn_four() {
 		tab_movement_four(i).innerHTML = "--";
 	}
 	reset(); // resets 3x3 part
+}
+
+function game_rand_four() {
+	reset();
+	reset_four();
+	var times = parseInt(val_epoch.value);
+	var won = 0;
+	var lost = 0;
+	var draw = 0;
+	var randop = chk_randop.checked;
+
+	if(!randop) {
+		console.log("playing against N.NETW PLAYER");
+	} else {
+		console.log("playing against RANDOM PLAYER");
+	}
+
+	for(var i = 0; i < times; i++) {
+		reset();
+		reset_four();
+
+		var move = null;
+		var m_move = null;
+		var situation = null;
+
+		while(true) {
+			situation = get_situation_four();
+			while(true) {
+				move = random_range(0,15);
+				if(situation[move] == 0) {
+					break;
+				}
+			}
+
+			m_move = turn_four(move, randop);
+			if(m_move.over == true) {
+				if(m_move.won == 1) {
+					won += 1;
+				} else if(m_move.won == -1) {
+					lost += 1;
+				} else if(m_move.won == 0) {
+					draw += 1;
+				}
+				break;
+			}
+			situation[m_move.move_chosen] = -1;
+			nturn_four();
+			//sleep_for(1000);
+		}
+
+		situation = null;
+	}
+
+	console.log(times + " epochs: " + won + " won, " + lost + " lost, "+ draw + " draw");
+	console.log("p(win) = " + won/times);
 }
