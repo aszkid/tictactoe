@@ -57,7 +57,7 @@ function find_win(situation) {
 }
 function is_draw(situation) {
 	for(var i = 0; i < situation.length; i++) {
-		if(situation[i] != 0) {
+		if(situation[i] == 0) {
 			return false;
 		}
 	}
@@ -84,7 +84,7 @@ var priorities = [
 	[[3,6],[2,5]],
 	[[5,9],[4,8]],
 	[[5,6,9,10],[]],
-	[[6,10],[5,11]],
+	[[6,10],[7,11]],
 	[[12,9],[8,13]],
 	[[9,10],[13,14]],
 	[[15,10],[11,14]]
@@ -103,8 +103,7 @@ var adjacents = [
 
 function fourify_threemove(situation, move) {
 	var finalmove = null;
-	var choices = priorities[move.move_chosen];
-	console.log("move chosen to fourify: " + move.move_chosen);
+	var choices = JSON.parse(JSON.stringify(priorities[move.move_chosen]));
 	// high priority moves
 	for(var j = 0; j < choices[0].length; j++) {
 		while(true) {
@@ -121,10 +120,8 @@ function fourify_threemove(situation, move) {
 		}
 	}
 	if(finalmove == null) {
-		console.log("second choice");
 		if(choices[1].length == 0) {
 			// MIDDLE THINGY IS FULL!!! CHOOSE ADJACENT
-			console.log("middle thingy is full, choose adjacent");
 			var adj = [0,1,2,3,5,6,7,8];
 			return fourify_threemove(situation, {move_chosen: adj[random_range(0,adj.length-1)], over: false});
 		}
@@ -135,7 +132,7 @@ function fourify_threemove(situation, move) {
 					//alert("couldn't find good position!!");
 					//return {over: true, won: 0};
 					//alert("adjacent thingy is " + move.move_chosen);
-					var adj = adjacents[move.move_chosen];
+					var adj = adjacents[move.move_chosen].slice();
 					return fourify_threemove(situation, {move_chosen: adj[random_range(0,adj.length-1)]});
 					break;
 				}
@@ -156,7 +153,7 @@ function turn_four(playermove, random) {
 	var situation = get_situation_four();
 	if(!valid_move(playermove, situation)) {
 		alert("Invalid move! Try again.");
-		return;
+		return {over:false};
 	}
 	situation[playermove] = 1;
 	for(var i = 0; i < newgamesize; i++) {
@@ -223,9 +220,6 @@ function turn_four(playermove, random) {
 		return finalmove;
 	}
 
-	// complexify into 4x4 situation
-	console.log("you moved: " + playermove);
-	console.log("i moved  : " + finalmove.move_chosen);
 	situation[finalmove.move_chosen] = -1;
 	// check win
 	var won = find_win(situation);
@@ -287,9 +281,12 @@ function game_rand_four() {
 		var turn = 0;
 		while(true) {
 			turn += 1;
-			console.log("TURN ("+turn+")");
 
 			situation = get_situation_four();
+			if(is_draw(situation)) {
+				draw += 1;
+				break;
+			}
 			while(true) {
 				move = random_range(0,15);
 				if(situation[move] == 0) {

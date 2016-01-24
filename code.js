@@ -288,11 +288,12 @@ function machine_move(situation, check) {
 			while(true) {
 				if(prob.w.every(elem => elem==0)) {
 					// draw!
-					if(!check) {
+					/*if(!check) {
 						// shit is filled but you need to move, don't worry here you have
+						console.log("filled shieet");
 						return {over:true, won:0, prob_table:prob.w, move_chosen:random_range(0,8)};
-					}
-					return {over: true, won: 0, prob_table: prob.w};
+					}*/
+					return {over: true, won: 0, prob_table: prob.w, move_chosen:random_range(0,8)};
 				}
 
 				var temp = max_ele(prob.w);
