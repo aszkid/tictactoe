@@ -55,6 +55,14 @@ function find_win(situation) {
 	}
 	return 0;
 }
+function is_draw(situation) {
+	for(var i = 0; i < situation.length; i++) {
+		if(situation[i] != 0) {
+			return false;
+		}
+	}
+	return true;
+}
 
 /***************************
 *** THE LOGIC OF IT ALL
@@ -81,15 +89,26 @@ var priorities = [
 	[[9,10],[13,14]],
 	[[15,10],[11,14]]
 ];
+var adjacents = [
+	[1,3,4],
+	[0,4,2],
+	[1,4,5],
+	[0,4,6],
+	[1,3,5,7],
+	[2,4,8],
+	[3,4,7],
+	[6,4,8],
+	[7,4,5]
+];
 
 function fourify_threemove(situation, move) {
 	var finalmove = null;
 	var choices = priorities[move.move_chosen];
+	console.log("move chosen to fourify: " + move.move_chosen);
 	// high priority moves
 	for(var j = 0; j < choices[0].length; j++) {
 		while(true) {
 			if(choices[0].length == 0) {
-				console.log("going to second choice");
 				break;
 			}
 			var cindex = random_range(0,choices[0].length-1);
@@ -102,26 +121,31 @@ function fourify_threemove(situation, move) {
 		}
 	}
 	if(finalmove == null) {
+		console.log("second choice");
 		if(choices[1].length == 0) {
 			// MIDDLE THINGY IS FULL!!! CHOOSE ADJACENT
+			console.log("middle thingy is full, choose adjacent");
 			var adj = [0,1,2,3,5,6,7,8];
-			return fourify_threemove(situation, {move_chosen: adj[random_range(0,8)]});
+			return fourify_threemove(situation, {move_chosen: adj[random_range(0,adj.length-1)], over: false});
 		}
 		for(var j = 0; j < choices[1].length; j++) {
 			while(true) {
 				if(choices[1].length == 0) {
-					// probably a draw
+					// probably a draw -- find adjacent
 					//alert("couldn't find good position!!");
-					return {over: true, won: 0};
+					//return {over: true, won: 0};
+					//alert("adjacent thingy is " + move.move_chosen);
+					var adj = adjacents[move.move_chosen];
+					return fourify_threemove(situation, {move_chosen: adj[random_range(0,adj.length-1)]});
 					break;
 				}
 				var cindex = random_range(0,choices[1].length-1);
 				var c = choices[1][cindex];
+				choices[1].splice(cindex, 1);
 				if(situation[c] == 0) {
 					finalmove = c;
 					break;
 				}
-				choices[1].splice(cindex, 1);
 			}
 		}
 	}
@@ -143,6 +167,10 @@ function turn_four(playermove, random) {
 	var won = find_win(situation);
 	if(won!=0) {
 		return {won:won, over:true};
+	}
+	// check if this move is a draw
+	if(is_draw(situation)) {
+		return {won:0, over:true};
 	}
 
 	var move = null;
@@ -186,6 +214,13 @@ function turn_four(playermove, random) {
 			tab_movement(i).innerHTML = situation_three[i];
 		}
 		finalmove = fourify_threemove(situation, move);
+	}
+
+	if(finalmove.over) {
+		for(var i = 0; i < newgamesize; i++) {
+			tab_movement_four(i).innerHTML = situation[i];
+		}
+		return finalmove;
 	}
 
 	// complexify into 4x4 situation
@@ -249,7 +284,11 @@ function game_rand_four() {
 		var m_move = null;
 		var situation = null;
 
+		var turn = 0;
 		while(true) {
+			turn += 1;
+			console.log("TURN ("+turn+")");
+
 			situation = get_situation_four();
 			while(true) {
 				move = random_range(0,15);
