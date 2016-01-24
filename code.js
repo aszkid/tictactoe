@@ -1,3 +1,13 @@
+Array.prototype.remove = function() {
+	var what, a = arguments, L = a.length, ax;
+	while (L && this.length) {
+		what = a[--L];
+		while ((ax = this.indexOf(what)) !== -1) {
+			this.splice(ax, 1);
+		}
+	}
+	return this;
+};
 
 function random_range(min, max) {
 	return Math.floor(Math.random()*(max-min+1)+min);
@@ -58,6 +68,30 @@ var lines = [
 	[0,4,8],
 	[2,4,6]
 ];
+var lines_new = {
+	"3" : [
+		[0,1,2],
+		[3,4,5],
+		[6,7,8],
+		[0,3,6],
+		[1,4,7],
+		[2,5,8],
+		[0,4,8],
+		[2,4,6]
+	],
+	"4" : [
+		[0,1,2,3],
+		[4,5,6,7],
+		[8,9,10,11],
+		[12,13,14,15],
+		[0,4,8,12],
+		[1,5,9,13],
+		[2,6,10,14],
+		[3,5,11,15],
+		[0,5,10,15],
+		[3,6,9,12]
+	]
+};
 
 function start() {
 
@@ -151,7 +185,7 @@ function start() {
 
 }
 
-function random_move(situation) {
+/*function random_move(situation) {
 	var move = null;
 	var sum = 0;
 	var probs = [0,0,0,0,0,0,0,0,0];
@@ -184,8 +218,47 @@ function random_move(situation) {
 			return {move_chosen: move, prob_table: probs};
 		}
 	}
+}*/
+function random_move(situation) {
+	var move = null;
+	var sum = 0;
+	var probs = new Array(situation.length);
+	probs.fill(0);
+	var len = Math.sqrt(situation.length);
+	var wlines = lines_new[len.toString()];
+
+	for(var i = 0; i < wlines.length; i++) {
+		for(var j = 0; j < wlines[i].length; j++) {
+			var what = situation[wlines[i][j]];
+			sum += what;
+			if(what == 0) {
+				empty = wlines[i][j];
+			}
+		}
+		if(sum==len) {
+			// lost
+			return {over: true, won: 1};
+		}
+		if(sum==-len) {
+			// won
+			return {over: true, won: -1};
+		}
+		sum = 0;
+	}
+
+	while(true) {
+		if(situation.every(elem => elem!=0)) {
+			return {over: true, won: 0};
+		}
+		move = random_range(0,situation.length-1);
+		if(situation[move] == 0) {
+			return {move_chosen: move, prob_table: probs};
+		}
+	}
+
 }
-function machine_move(situation) {
+
+function machine_move(situation, check) {
 	var move = null;
 	var situation_o = situation;
 	var x = new convnetjs.Vol(situation);
@@ -205,7 +278,7 @@ function machine_move(situation) {
 				empty = lines[i][j];
 			}
 		}
-		if(sum==3) {
+		if(sum==3 && check) {
 			// lost
 			return {over: true, won: 1};
 		}

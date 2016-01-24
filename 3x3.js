@@ -33,7 +33,7 @@ function turn(playermove, random) {
 	if(random) {
 		move = random_move(situation);
 	} else {
-		move = machine_move(situation);
+		move = machine_move(situation, true);
 	}
 
 	//console.log("machine moving to " + move.move_chosen);
