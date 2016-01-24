@@ -206,3 +206,11 @@ function manual_turn_four() {
 		but_subt.disabled = true;
 	}
 }
+
+function nturn_four() {
+	for(var i = 0; i < newgamesize; i++) {
+		tab_original_four(i).innerHTML = tab_movement_four(i).innerHTML;
+		tab_movement_four(i).innerHTML = "--";
+	}
+	reset(); // resets 3x3 part
+}
