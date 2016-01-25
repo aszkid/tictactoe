@@ -4,6 +4,20 @@
 
 <!-- CSS goes here -->
 <style>
+.bright {
+	border-right: thin dotted black;
+	padding-right:30px;
+}
+.bleft {
+	border-left: thin dotted black;
+	padding-left:30px;
+}
+.pright {
+	padding-right:30px;
+}
+.pleft {
+	padding-left:30px;
+}
 </style>
 
 <!-- import convnetjs library -->
@@ -18,62 +32,71 @@
 <h1>3x3 version</h1>
 <label><input type="checkbox" id="randop"> Random opponent</label> --- <button onclick="reset();">Reset</button>
 <hr>
-<h2>Original position</h2>
-<table id="original" border="1">
-	<tr>
-		<td class="tab-0"></td>
-		<td class="tab-1"></td>
-		<td class="tab-2"></td>
-	</tr>
-	<tr>
-		<td class="tab-3"></td>
-		<td class="tab-4"></td>
-		<td class="tab-5"></td>
-	</tr>
-	<tr>
-		<td class="tab-6"></td>
-		<td class="tab-7"></td>
-		<td class="tab-8"></td>
-	</tr>
+<table>
+<tr>
+	<td class="bright">
+		<h2>Original position</h2>
+		<table id="original" border="1">
+			<tr>
+				<td class="tab-0"></td>
+				<td class="tab-1"></td>
+				<td class="tab-2"></td>
+			</tr>
+			<tr>
+				<td class="tab-3"></td>
+				<td class="tab-4"></td>
+				<td class="tab-5"></td>
+			</tr>
+			<tr>
+				<td class="tab-6"></td>
+				<td class="tab-7"></td>
+				<td class="tab-8"></td>
+			</tr>
+		</table>
+	</td>
+	<td class="pright pleft">
+		<h2>Probability table</h2>
+		<table id="probtab" border="1">
+			<tr>
+				<td class="tab-0"></td>
+				<td class="tab-1"></td>
+				<td class="tab-2"></td>
+			</tr>
+			<tr>
+				<td class="tab-3"></td>
+				<td class="tab-4"></td>
+				<td class="tab-5"></td>
+			</tr>
+			<tr>
+				<td class="tab-6"></td>
+				<td class="tab-7"></td>
+				<td class="tab-8"></td>
+			</tr>
+		</table>
+	</td>
+	<td class="bleft pleft">
+		<h2>Final move</h2>
+		<table id="movement" border="1">
+			<tr>
+				<td class="tab-0"></td>
+				<td class="tab-1"></td>
+				<td class="tab-2"></td>
+			</tr>
+			<tr>
+				<td class="tab-3"></td>
+				<td class="tab-4"></td>
+				<td class="tab-5"></td>
+			</tr>
+			<tr>
+				<td class="tab-6"></td>
+				<td class="tab-7"></td>
+				<td class="tab-8"></td>
+			</tr>
+		</table>
+	</td>
+</tr>
 </table>
 
-<h2>Probability table</h2>
-<table id="probtab" border="1">
-	<tr>
-		<td class="tab-0"></td>
-		<td class="tab-1"></td>
-		<td class="tab-2"></td>
-	</tr>
-	<tr>
-		<td class="tab-3"></td>
-		<td class="tab-4"></td>
-		<td class="tab-5"></td>
-	</tr>
-	<tr>
-		<td class="tab-6"></td>
-		<td class="tab-7"></td>
-		<td class="tab-8"></td>
-	</tr>
-</table>
-
-<h2>Final move</h2>
-<table id="movement" border="1">
-	<tr>
-		<td class="tab-0"></td>
-		<td class="tab-1"></td>
-		<td class="tab-2"></td>
-	</tr>
-	<tr>
-		<td class="tab-3"></td>
-		<td class="tab-4"></td>
-		<td class="tab-5"></td>
-	</tr>
-	<tr>
-		<td class="tab-6"></td>
-		<td class="tab-7"></td>
-		<td class="tab-8"></td>
-	</tr>
-</table>
 <hr>
 <h3>Manual Game</h3>
 <p><i>(manual player)</i></p>
